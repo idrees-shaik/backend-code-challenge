@@ -30,10 +30,8 @@ public class MessagesController : ControllerBase
     public async Task<ActionResult<Message>> GetById(Guid organizationId, Guid id)
     {
         var message = await _repository.GetByIdAsync(organizationId, id);
-
         if (message == null)
             return NotFound();
-
         return Ok(message);
     }
 
@@ -43,8 +41,7 @@ public class MessagesController : ControllerBase
     {
         if (request == null)
             return BadRequest();
-
-        var message = new Message
+        var newMessage = new Message
         {
             Id = Guid.NewGuid(),
             OrganizationId = organizationId,
@@ -54,33 +51,23 @@ public class MessagesController : ControllerBase
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-
-        var created = await _repository.CreateAsync(message);
-
-        return CreatedAtAction(
-            nameof(GetById),
-            new { organizationId = organizationId, id = created.Id },
-            created);
+        var created = await _repository.CreateAsync(newMessage);
+        return CreatedAtAction(nameof(GetById),new { organizationId = organizationId, id = created.Id },created);
     }
 
     // PUT: api/v1/organizations/{organizationId}/messages/{id}
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid organizationId, Guid id, [FromBody] UpdateMessageRequest request)
     {
-        var existing = await _repository.GetByIdAsync(organizationId, id);
-
-        if (existing == null)
+        var existingMessage = await _repository.GetByIdAsync(organizationId, id);
+        if (existingMessage == null)
             return NotFound();
-
         existing.Title = request.Title;
         existing.Content = request.Content;
         existing.UpdatedAt = DateTime.UtcNow;
-
         var updated = await _repository.UpdateAsync(existing);
-
         if (updated == null)
-            return NotFound();
-
+        return NotFound();
         return Ok(updated);
     }
 
@@ -88,11 +75,10 @@ public class MessagesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid organizationId, Guid id)
     {
-        var deleted = await _repository.DeleteAsync(organizationId, id);
-
-        if (!deleted)
+        var deletedMessage = await _repository.DeleteAsync(organizationId, id);
+        if (!deletedMessage)
             return NotFound();
-
         return NoContent();
     }
 }
+
