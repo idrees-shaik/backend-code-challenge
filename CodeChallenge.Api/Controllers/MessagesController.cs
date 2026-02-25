@@ -1,5 +1,5 @@
+using CodeChallenge.Api.Logic;
 using CodeChallenge.Api.Models;
-using CodeChallenge.Api.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CodeChallenge.Api.Controllers;
@@ -8,77 +8,86 @@ namespace CodeChallenge.Api.Controllers;
 [Route("api/v1/organizations/{organizationId}/messages")]
 public class MessagesController : ControllerBase
 {
-    private readonly IMessageRepository _repository;
+    private readonly IMessageLogic _logic;
     private readonly ILogger<MessagesController> _logger;
 
-    public MessagesController(IMessageRepository repository, ILogger<MessagesController> logger)
+    public MessagesController(IMessageLogic logic, ILogger<MessagesController> logger)
     {
-        _repository = repository;
+        _logic = logic;
         _logger = logger;
     }
 
     // GET: api/v1/organizations/{organizationId}/messages
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Message>>> GetAll(Guid organizationId)
+    public async Task<IActionResult> GetAll(Guid organizationId)
     {
-        var messages = await _repository.GetAllByOrganizationAsync(organizationId);
+        var messages = await _logic.GetAllMessagesAsync(organizationId);
+
+        if (messages == null || !messages.Any())
+            return NotFound("No messages found");
+
         return Ok(messages);
     }
 
     // GET: api/v1/organizations/{organizationId}/messages/{id}
     [HttpGet("{id}")]
-    public async Task<ActionResult<Message>> GetById(Guid organizationId, Guid id)
+    public async Task<IActionResult> GetById(Guid organizationId, Guid id)
     {
-        var message = await _repository.GetByIdAsync(organizationId, id);
+        var message = await _logic.GetMessageAsync(organizationId, id);
+
         if (message == null)
-            return NotFound();
+            return NotFound("Message not found");
+
         return Ok(message);
     }
 
     // POST: api/v1/organizations/{organizationId}/messages
     [HttpPost]
-    public async Task<ActionResult<Message>> Create(Guid organizationId, [FromBody] CreateMessageRequest request)
+    public async Task<IActionResult> Create(Guid organizationId, [FromBody] CreateMessageRequest request)
     {
-        if (request == null)
-            return BadRequest();
-        var newMessage = new Message
+        var result = await _logic.CreateMessageAsync(organizationId, request);
+
+        return result switch
         {
-            Id = Guid.NewGuid(),
-            OrganizationId = organizationId,
-            Title = request.Title,
-            Content = request.Content,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Created<Message> created => CreatedAtAction(
+                nameof(GetById),
+                new { organizationId, id = created.Value.Id },
+                created.Value),
+
+            ValidationError ve => BadRequest(ve.Errors),
+            Conflict c => Conflict(c.Message),
+            _ => BadRequest("Unknown error")
         };
-        var created = await _repository.CreateAsync(newMessage);
-        return CreatedAtAction(nameof(GetById),new { organizationId = organizationId, id = created.Id },created);
     }
 
     // PUT: api/v1/organizations/{organizationId}/messages/{id}
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update(Guid organizationId, Guid id, [FromBody] UpdateMessageRequest request)
+    public async Task<IActionResult> Update(Guid organizationId, Guid id, [FromBody] UpdateMessageRequest request)
     {
-        var existingMessage = await _repository.GetByIdAsync(organizationId, id);
-        if (existingMessage == null)
-            return NotFound();
-        existing.Title = request.Title;
-        existing.Content = request.Content;
-        existing.UpdatedAt = DateTime.UtcNow;
-        var updated = await _repository.UpdateAsync(existing);
-        if (updated == null)
-        return NotFound();
-        return Ok(updated);
+        var result = await _logic.UpdateMessageAsync(organizationId, id, request);
+
+        return result switch
+        {
+            Updated => Ok(),
+            ValidationError ve => BadRequest(ve.Errors),
+            NotFound nf => NotFound(nf.Message),
+            Conflict c => Conflict(c.Message),
+            _ => BadRequest("Unknown error")
+        };
     }
 
     // DELETE: api/v1/organizations/{organizationId}/messages/{id}
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(Guid organizationId, Guid id)
+    public async Task<IActionResult> Delete(Guid organizationId, Guid id)
     {
-        var deletedMessage = await _repository.DeleteAsync(organizationId, id);
-        if (!deletedMessage)
-            return NotFound();
-        return NoContent();
+        var result = await _logic.DeleteMessageAsync(organizationId, id);
+
+        return result switch
+        {
+            Deleted => NoContent(),
+            NotFound nf => NotFound(nf.Message),
+            Conflict c => Conflict(c.Message),
+            _ => BadRequest("Unknown error")
+        };
     }
 }
-

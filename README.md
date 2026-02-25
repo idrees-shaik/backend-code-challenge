@@ -66,8 +66,22 @@ commit the code as task-1
 4. Update Controller to use `IMessageLogic` instead of directly using the repository
 
 **Question 3:** How did you approach the validation requirements and why?
+All business rules are enforced in MessageLogic instead of the controller.
+This keeps controllers thin and focused on HTTP handling, while the logic layer handles rules consistently.
+Validation rules implemented
+Title: required, 3–200 characters, unique per organization.
+Content: 10–1000 characters.
+Active status: only messages with IsActive = true can be updated or deleted.
+UpdatedAt: automatically updated on modifications.
+
+Why this approach:
+Ensures consistent validation across all endpoints.
+easily testable.
 
 **Question 4:** What changes would you make to this implementation for a production environment?
+Authoruzation and security
+Error handling and logging improvements
+API documentation and versioning
 
 commit the code as task-2
 
