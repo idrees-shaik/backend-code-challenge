@@ -102,5 +102,14 @@ commit the code as task-2
 **Question 5:** Explain your testing strategy and the tools you chose.
 
 **Question 6:** What other scenarios would you test in a real-world application?
+Integration tests:
+
+Tests with the real database to validate repository logic and EF Core behavior.
+Endpoint tests for the API layer to ensure correct HTTP responses.
+
+Performance and load scenarios:
+Testing GetAllMessagesAsync with large datasets to ensure pagination and filtering work correctly.
+
+Error handling:
 
 commit the code as task-3
