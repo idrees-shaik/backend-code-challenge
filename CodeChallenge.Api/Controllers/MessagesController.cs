@@ -9,12 +9,9 @@ namespace CodeChallenge.Api.Controllers;
 public class MessagesController : ControllerBase
 {
     private readonly IMessageRepository _repository;
-    private readonly ILogger<MessagesController> _logger;
-
-    public MessagesController(IMessageRepository repository, ILogger<MessagesController> logger)
+    public MessagesController(IMessageRepository repository)
     {
         _repository = repository;
-        _logger = logger;
     }
 
     // GET: api/v1/organizations/{organizationId}/messages
@@ -81,4 +78,5 @@ public class MessagesController : ControllerBase
         return NoContent();
     }
 }
+
 
