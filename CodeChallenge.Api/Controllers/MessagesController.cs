@@ -17,38 +17,82 @@ public class MessagesController : ControllerBase
         _logger = logger;
     }
 
+    // GET: api/v1/organizations/{organizationId}/messages
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Message>>> GetAll(Guid organizationId)
     {
-        // TODO: Implement
-        throw new NotImplementedException();
+        var messages = await _repository.GetAllByOrganizationAsync(organizationId);
+        return Ok(messages);
     }
 
+    // GET: api/v1/organizations/{organizationId}/messages/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<Message>> GetById(Guid organizationId, Guid id)
     {
-        // TODO: Implement
-        throw new NotImplementedException();
+        var message = await _repository.GetByIdAsync(organizationId, id);
+
+        if (message == null)
+            return NotFound();
+
+        return Ok(message);
     }
 
+    // POST: api/v1/organizations/{organizationId}/messages
     [HttpPost]
     public async Task<ActionResult<Message>> Create(Guid organizationId, [FromBody] CreateMessageRequest request)
     {
-        // TODO: Implement
-        throw new NotImplementedException();
+        if (request == null)
+            return BadRequest();
+
+        var message = new Message
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organizationId,
+            Title = request.Title,
+            Content = request.Content,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var created = await _repository.CreateAsync(message);
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { organizationId = organizationId, id = created.Id },
+            created);
     }
 
+    // PUT: api/v1/organizations/{organizationId}/messages/{id}
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(Guid organizationId, Guid id, [FromBody] UpdateMessageRequest request)
     {
-        // TODO: Implement
-        throw new NotImplementedException();
+        var existing = await _repository.GetByIdAsync(organizationId, id);
+
+        if (existing == null)
+            return NotFound();
+
+        existing.Title = request.Title;
+        existing.Content = request.Content;
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        var updated = await _repository.UpdateAsync(existing);
+
+        if (updated == null)
+            return NotFound();
+
+        return Ok(updated);
     }
 
+    // DELETE: api/v1/organizations/{organizationId}/messages/{id}
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid organizationId, Guid id)
     {
-        // TODO: Implement
-        throw new NotImplementedException();
+        var deleted = await _repository.DeleteAsync(organizationId, id);
+
+        if (!deleted)
+            return NotFound();
+
+        return NoContent();
     }
 }
