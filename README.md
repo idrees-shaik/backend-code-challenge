@@ -35,8 +35,19 @@ Start the test by forking this repository, and complete the following tasks:
 - `DELETE /api/v1/organizations/{organizationId}/messages/{id}` - Delete a message
 
 **Question 1:** Describe your implementation approach and the key decisions you made.
+For Task 1, I implemented a RESTful API using MessagesController to handle CRUD operations for messages under an organization.
+
+The controller uses IMessageRepository via Dependency Injection to perform all data access operations. The repository follows an asynchronous pattern to improve scalability and responsiveness.
+
+The API route structure is:
+
+api/v1/organizations/{organizationId}/messages
 
 **Question 2:** What would you improve or change if you had more time?
+Would have implemented Logging Mechanism.
+would have implemented Authentication part.
+Would have handled http exceptinos properly.
+WOuld have added pagination.
 
 commit the code as task-1
 
